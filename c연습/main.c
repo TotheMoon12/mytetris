@@ -27,6 +27,7 @@ int main(void)
 	COORD coor = { 0 , 0 };
 	DWORD dw;
 	HANDLE screenBuffer[2];
+	clock_t start, end;
 	
 	
 	screenBuffer[0] = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
@@ -51,6 +52,12 @@ int main(void)
 			}
 		}
 	}
+
+	DrawBoard(board, screenBuffer, screenBufferIndex);
+	DrawBlock(block, screenBuffer, screenBufferIndex);
+	SetConsoleActiveScreenBuffer(screenBuffer[screenBufferIndex]);
+	screenBufferIndex = (screenBufferIndex + 1) % 2;
+	start = clock();
 
 	while (1)
 	{
@@ -219,6 +226,74 @@ int main(void)
 				/* 다음 화면버퍼 내용을 지워두기 */
 				FillConsoleOutputCharacter(screenBuffer[screenBufferIndex], ' ', 100 * 100, coor, &dw); 
 			}
+		}
+		end = clock();
+		
+		if (end - start >= 1000)
+		{
+			++block.pos.Y;
+			if (CheckCrush(block, board) == 1)
+			{
+				--block.pos.Y;
+
+				for (i = 0; i < 4; ++i)
+				{
+					x = (block.pos.X + rotationInfo[block.type][block.state][i][0]) / 2;
+					y = block.pos.Y + rotationInfo[block.type][block.state][i][1];
+					board[y][x] = BLOCK;
+				}
+
+				block.pos.X = 10;
+				block.pos.Y = 1;
+				block.state = 0;
+				block.type = rand() % 7;
+
+				deletingFirstLine = -1;
+				deletingLineNum = 0;
+
+				for (i = BOARD_ROW_LENGTH - 2; i >= 0; --i)
+				{
+					checking = 1;
+
+					for (j = BOARD_COL_LENGTH - 3; j >= 2; --j)
+					{
+						if (board[i][j] == BLANK)
+						{
+							checking = 0;
+							break;
+						}
+					}
+
+					if (checking == 1)
+					{
+						if (deletingFirstLine == -1)
+						{
+							deletingFirstLine = i;
+						}
+
+						++deletingLineNum;
+					}
+				}
+				if (deletingLineNum > 0)
+				{
+					for (i = deletingFirstLine - deletingLineNum; i >= 0; --i)
+					{
+						for (j = 2; j < BOARD_COL_LENGTH - 2; ++j)
+						{
+							board[i + deletingLineNum][j] = board[i][j];
+						}
+					}
+				}
+			}
+			DrawBoard(board, screenBuffer, screenBufferIndex);
+			DrawBlock(block, screenBuffer, screenBufferIndex);
+
+			SetConsoleActiveScreenBuffer(screenBuffer[screenBufferIndex]);
+			screenBufferIndex = (screenBufferIndex + 1) % 2;
+
+			/* 다음 화면버퍼 내용을 지워두기 */
+			FillConsoleOutputCharacter(screenBuffer[screenBufferIndex], ' ', 100 * 100, coor, &dw);
+			start = clock();
 		}
 	}
 
