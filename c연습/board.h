@@ -13,3 +13,5 @@ enum EBoardState
 
 void DrawBoard(int board[BOARD_ROW_LENGTH][BOARD_COL_LENGTH], HANDLE screenBuffer[2], int screenBufferIndex);
 int CheckCrush(Block block, int board[BOARD_ROW_LENGTH][BOARD_COL_LENGTH]);
+void updateBoard(int board[BOARD_ROW_LENGTH][BOARD_COL_LENGTH], Block* block);
+int CheckGameState(int board[BOARD_ROW_LENGTH][BOARD_COL_LENGTH]);

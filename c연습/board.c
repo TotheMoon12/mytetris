@@ -52,10 +52,78 @@ int CheckCrush(Block block, int board[BOARD_ROW_LENGTH][BOARD_COL_LENGTH])
 		}
 		else
 		{
-			if (y >=0 && (board[y][x] == WALL || board[y][x] == BLOCK || board[y][x] == WALL || board[y][x] == BLOCK))
+			if (y >= 0 && (board[y][x] == WALL || board[y][x] == BLOCK || board[y][x] == WALL || board[y][x] == BLOCK))
 			{
 				return 1;
 			}
+		}
+	}
+
+	return 0;
+}
+
+void updateBoard(int board[BOARD_ROW_LENGTH][BOARD_COL_LENGTH], Block* block)
+{
+	int i, j;
+	int x, y;
+	int deletingFirstLine;
+	int deletingLineNum;
+	int checking;
+
+	for (i = 0; i < 4; ++i)
+	{
+		x = (block->pos.X + rotationInfo[block->type][block->state][i][0]) / 2;
+		y = block->pos.Y + rotationInfo[block->type][block->state][i][1];
+		board[y][x] = BLOCK;
+	}
+
+	deletingFirstLine = -1;
+	deletingLineNum = 0;
+
+	for (i = BOARD_ROW_LENGTH - 2; i >= 0; --i)
+	{
+		checking = 1;
+
+		for (j = BOARD_COL_LENGTH - 3; j >= 2; --j)
+		{
+			if (board[i][j] == BLANK)
+			{
+				checking = 0;
+				break;
+			}
+		}
+
+		if (checking == 1)
+		{
+			if (deletingFirstLine == -1)
+			{
+				deletingFirstLine = i;
+			}
+
+			++deletingLineNum;
+		}
+	}
+	if (deletingLineNum > 0)
+	{
+		for (i = deletingFirstLine - deletingLineNum; i >= 0; --i)
+		{
+			for (j = 2; j < BOARD_COL_LENGTH - 2; ++j)
+			{
+				board[i + deletingLineNum][j] = board[i][j];
+			}
+		}
+	}
+}
+
+int CheckGameState(int board[BOARD_ROW_LENGTH][BOARD_COL_LENGTH])
+{
+	size_t i;
+
+	for (i = 0; i < BOARD_COL_LENGTH; ++i)
+	{
+		if (board[0][i] == BLOCK)
+		{
+			return 1;
 		}
 	}
 

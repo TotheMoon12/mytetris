@@ -1,8 +1,6 @@
 #include <conio.h>
-#include <stdlib.h>
 #include <time.h>
 #include "board.h"
-
 
 enum EKeyDirection
 {
@@ -16,12 +14,9 @@ enum EKeyDirection
 int main(void)
 {
 	int i, j;
-	int deletingFirstLine, deletingLineNum;
-	int x, y;
 	int key;
 	int board[BOARD_ROW_LENGTH][BOARD_COL_LENGTH] = { 0, };
 	int curBlockState;
-	int checking;
 	int screenBufferIndex = 0;
 	Block block;
 	COORD coor = { 0 , 0 };
@@ -29,17 +24,12 @@ int main(void)
 	HANDLE screenBuffer[2];
 	clock_t start, end;
 	
-	
 	screenBuffer[0] = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 	screenBuffer[1] = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 
-
 	srand(time(NULL));
 
-	block.pos.X = 10;
-	block.pos.Y = 0;
-	block.state = 0;
-	block.type = rand() % 7;
+	initalizeBlock(&block);
 
 	/* Initialize Board */
 	for (i = 0; i < BOARD_ROW_LENGTH; ++i)
@@ -76,80 +66,48 @@ int main(void)
 				case UP:
 					curBlockState = block.state;
 					block.state = (block.state + 1) % 4;
+
 					if (CheckCrush(block, board) == 1)
 					{
 						block.state = curBlockState;
 					}
+
 					break;
 				case DOWN:
 					++block.pos.Y;
+
 					if (CheckCrush(block, board) == 1)
 					{
 						--block.pos.Y;
 
-						for (i = 0; i < 4; ++i)
+						updateBoard(board, &block);
+
+						if (CheckGameState(board) == 1)
 						{
-							x = (block.pos.X + rotationInfo[block.type][block.state][i][0]) / 2;
-							y = block.pos.Y + rotationInfo[block.type][block.state][i][1];
-							board[y][x] = BLOCK;
+							goto gameEnd;
 						}
 
-						block.pos.X = 10;
-						block.pos.Y = 1;
-						block.state = 0;
-						block.type = rand() % 7;
-
-						deletingFirstLine = -1;
-						deletingLineNum = 0;
-
-						for (i = BOARD_ROW_LENGTH - 2; i >= 0; --i)
-						{
-							checking = 1;
-
-							for (j = BOARD_COL_LENGTH - 3; j >= 2; --j)
-							{
-								if (board[i][j] == BLANK)
-								{
-									checking = 0;
-									break;
-								}
-							}
-
-							if (checking == 1)
-							{
-								if (deletingFirstLine == -1)
-								{
-									deletingFirstLine = i;
-								}
-
-								++deletingLineNum;
-							}
-						}
-						if (deletingLineNum > 0)
-						{
-							for (i = deletingFirstLine - deletingLineNum; i >= 0; --i)
-							{
-								for (j = 2; j < BOARD_COL_LENGTH - 2; ++j)
-								{
-									board[i + deletingLineNum][j] = board[i][j];
-								}
-							}
-						}						
+						initalizeBlock(&block);						
 					}
+
 					break;
 				case LEFT:
 					block.pos.X -= 2;
+
 					if (CheckCrush(block, board) == 1)
 					{
 						block.pos.X += 2;
 					}
+
 					break;
 				case RIGHT:
 					block.pos.X += 2;
+
 					if (CheckCrush(block, board) == 1)
 					{
 						block.pos.X -= 2;
 					}
+
 					break;
 				case SPACE:
 					while (1)
@@ -160,58 +118,18 @@ int main(void)
 						{
 							--block.pos.Y;
 
-							for (i = 0; i < 4; ++i)
+							updateBoard(board, &block);
+
+							if (CheckGameState(board) == 1)
 							{
-								x = (block.pos.X + rotationInfo[block.type][block.state][i][0]) / 2;
-								y = block.pos.Y + rotationInfo[block.type][block.state][i][1];
-								board[y][x] = BLOCK;
+								goto gameEnd;
 							}
 
-							block.pos.X = 10;
-							block.pos.Y = 1;
-							block.state = 0;
-							block.type = rand() % 7;
-
-							deletingFirstLine = -1;
-							deletingLineNum = 0;
-
-							for (i = BOARD_ROW_LENGTH - 2; i >= 0; --i)
-							{
-								checking = 1;
-
-								for (j = BOARD_COL_LENGTH - 3; j >= 2; --j)
-								{
-									if (board[i][j] == BLANK)
-									{
-										checking = 0;
-										break;
-									}
-								}
-
-								if (checking == 1)
-								{
-									if (deletingFirstLine == -1)
-									{
-										deletingFirstLine = i;
-									}
-
-									++deletingLineNum;
-								}
-							}
-							if (deletingLineNum > 0)
-							{
-								for (i = deletingFirstLine - deletingLineNum; i >= 0; --i)
-								{
-									for (j = 2; j < BOARD_COL_LENGTH - 2; ++j)
-									{
-										board[i + deletingLineNum][j] = board[i][j];
-									}
-								}
-							}
-
+							initalizeBlock(&block);
 							break;
 						}
 					}
+
 					break;
 				default:
 					break;
@@ -227,6 +145,7 @@ int main(void)
 				FillConsoleOutputCharacter(screenBuffer[screenBufferIndex], ' ', 100 * 100, coor, &dw); 
 			}
 		}
+
 		end = clock();
 		
 		if (end - start >= 1000)
@@ -236,55 +155,16 @@ int main(void)
 			{
 				--block.pos.Y;
 
-				for (i = 0; i < 4; ++i)
+				updateBoard(board, &block);
+
+				if (CheckGameState(board) == 1)
 				{
-					x = (block.pos.X + rotationInfo[block.type][block.state][i][0]) / 2;
-					y = block.pos.Y + rotationInfo[block.type][block.state][i][1];
-					board[y][x] = BLOCK;
+					goto gameEnd;
 				}
 
-				block.pos.X = 10;
-				block.pos.Y = 1;
-				block.state = 0;
-				block.type = rand() % 7;
-
-				deletingFirstLine = -1;
-				deletingLineNum = 0;
-
-				for (i = BOARD_ROW_LENGTH - 2; i >= 0; --i)
-				{
-					checking = 1;
-
-					for (j = BOARD_COL_LENGTH - 3; j >= 2; --j)
-					{
-						if (board[i][j] == BLANK)
-						{
-							checking = 0;
-							break;
-						}
-					}
-
-					if (checking == 1)
-					{
-						if (deletingFirstLine == -1)
-						{
-							deletingFirstLine = i;
-						}
-
-						++deletingLineNum;
-					}
-				}
-				if (deletingLineNum > 0)
-				{
-					for (i = deletingFirstLine - deletingLineNum; i >= 0; --i)
-					{
-						for (j = 2; j < BOARD_COL_LENGTH - 2; ++j)
-						{
-							board[i + deletingLineNum][j] = board[i][j];
-						}
-					}
-				}
+				initalizeBlock(&block);
 			}
+
 			DrawBoard(board, screenBuffer, screenBufferIndex);
 			DrawBlock(block, screenBuffer, screenBufferIndex);
 
@@ -296,6 +176,12 @@ int main(void)
 			start = clock();
 		}
 	}
+
+gameEnd:
+	screenBufferIndex = (screenBufferIndex + 1) % 2;
+	WriteFile(screenBuffer[screenBufferIndex], "Game End", strlen("Game End"), &dw, NULL);
+	SetConsoleActiveScreenBuffer(screenBuffer[screenBufferIndex]);
+	Sleep(2000);
 
 	CloseHandle(screenBuffer[0]);
 	CloseHandle(screenBuffer[1]);

@@ -150,3 +150,11 @@ void DrawBlock(Block block, HANDLE screenBuffer[2], int screenBufferIndex)
 	//SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), block.pos);
 	SetConsoleCursorPosition(screenBuffer[screenBufferIndex], block.pos);
 }
+
+void initalizeBlock(Block* block)
+{
+	block->pos.X = 10;
+	block->pos.Y = 1;
+	block->state = 0;
+	block->type = rand() % 7;
+}
