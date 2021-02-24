@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BOARD_H
+#define BOARD_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <Windows.h>
@@ -16,3 +17,5 @@ typedef struct Block
 void DrawBlock(Block block, HANDLE screenBuffer[2], int screenBufferIndex);
 void initalizeBlock(Block* block);
 extern const int rotationInfo[BLOCK_NUM][ROTATION_NUM][POINT_NUM][2];
+
+#endif BOARD_H
